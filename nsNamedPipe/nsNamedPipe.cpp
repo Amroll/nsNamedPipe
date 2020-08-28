@@ -6,7 +6,8 @@
 #define BUFF_SIZE 512
 #define PIPE_NAME TEXT("\\\\.\\pipe\\")
 
-TCHAR szBuf[NSIS_MAX_STRLEN];
+TCHAR pipeName[NSIS_MAX_STRLEN];
+TCHAR sendChar[NSIS_MAX_STRLEN];
 extern "C" {
     void __declspec(dllexport) ReadNamedPipe(HWND hwndParent,
         int string_size,
@@ -15,8 +16,8 @@ extern "C" {
         extra_parameters* extra, ...)
     {
         EXDLL_INIT();
-        popstring(szBuf);
-        MessageBox(hwndParent, szBuf, _T("11"), MB_OK);
+        popstring(pipeName);
+        popstring(sendChar);
 
         HANDLE hPipe;
         char wBuf[BUFF_SIZE];
@@ -25,7 +26,7 @@ extern "C" {
         DWORD dwMode, cbWrite, cbRead;
         TCHAR ret[BUFF_SIZE];
         
-        hPipe = CreateFile(szBuf,
+        hPipe = CreateFile(pipeName,
             GENERIC_WRITE|GENERIC_READ,
             0,
             NULL,
@@ -43,7 +44,14 @@ extern "C" {
             }
             else
             {
-                lstrcpy(wBuf, "ID\n");
+                WriteFile(
+                    hPipe,
+                    sendChar,
+                    lstrlen(sendChar),
+                    &cbWrite,
+                    NULL);
+                //写入换行
+                lstrcpy(wBuf, "\n");
                 WriteFile(
                     hPipe,
                     wBuf,
